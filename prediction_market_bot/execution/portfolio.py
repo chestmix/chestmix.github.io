@@ -70,8 +70,8 @@ class Portfolio:
             return
         self._positions[position.market_id] = position
         logger.info(
-            "Portfolio: opened position in %s $%.2f (edge=%.2%)",
-            position.market_id, position.order.size_usd, position.entry_edge,
+            "Portfolio: opened position in %s $%.2f (edge=%.1f%%)",
+            position.market_id, position.order.size_usd, position.entry_edge * 100,
         )
 
     def remove_position(self, market_id: str) -> Optional[Position]:

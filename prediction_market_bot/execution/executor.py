@@ -113,9 +113,9 @@ class Executor:
             )
             self._portfolio.add_position(pos)
             logger.info(
-                "Executed: %s %s on %s size=$%.2f edge=%.2%",
+                "Executed: %s %s on %s size=$%.2f edge=%.1f%%",
                 signal.action, market.market_id, market.platform,
-                signal.position_size_usd, signal.edge,
+                signal.position_size_usd, signal.edge * 100,
             )
 
         return order
