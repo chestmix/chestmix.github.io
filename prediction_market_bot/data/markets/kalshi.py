@@ -40,8 +40,12 @@ _WEATHER_SERIES = re.compile(
 )
 
 _CITY_COORDS: Dict[str, Dict[str, float]] = {
+    # Major US metros
     "new york": {"lat": 40.71, "lon": -74.01},
+    "new york city": {"lat": 40.71, "lon": -74.01},
+    "nyc": {"lat": 40.71, "lon": -74.01},
     "los angeles": {"lat": 34.05, "lon": -118.24},
+    "la": {"lat": 34.05, "lon": -118.24},
     "chicago": {"lat": 41.88, "lon": -87.63},
     "seattle": {"lat": 47.61, "lon": -122.33},
     "miami": {"lat": 25.77, "lon": -80.19},
@@ -50,6 +54,50 @@ _CITY_COORDS: Dict[str, Dict[str, float]] = {
     "dallas": {"lat": 32.78, "lon": -96.80},
     "atlanta": {"lat": 33.75, "lon": -84.39},
     "san francisco": {"lat": 37.77, "lon": -122.42},
+    "sf": {"lat": 37.77, "lon": -122.42},
+    # Additional US cities
+    "houston": {"lat": 29.76, "lon": -95.37},
+    "phoenix": {"lat": 33.45, "lon": -112.07},
+    "philadelphia": {"lat": 39.95, "lon": -75.17},
+    "san antonio": {"lat": 29.42, "lon": -98.49},
+    "san diego": {"lat": 32.72, "lon": -117.16},
+    "portland": {"lat": 45.52, "lon": -122.68},
+    "las vegas": {"lat": 36.17, "lon": -115.14},
+    "minneapolis": {"lat": 44.98, "lon": -93.27},
+    "kansas city": {"lat": 39.10, "lon": -94.58},
+    "nashville": {"lat": 36.17, "lon": -86.78},
+    "oklahoma city": {"lat": 35.47, "lon": -97.52},
+    "charlotte": {"lat": 35.23, "lon": -80.84},
+    "raleigh": {"lat": 35.78, "lon": -78.64},
+    "richmond": {"lat": 37.54, "lon": -77.43},
+    "salt lake city": {"lat": 40.76, "lon": -111.89},
+    "memphis": {"lat": 35.15, "lon": -90.05},
+    "new orleans": {"lat": 29.95, "lon": -90.07},
+    "detroit": {"lat": 42.33, "lon": -83.05},
+    "indianapolis": {"lat": 39.77, "lon": -86.16},
+    "columbus": {"lat": 39.96, "lon": -82.99},
+    "cleveland": {"lat": 41.50, "lon": -81.69},
+    "pittsburgh": {"lat": 40.44, "lon": -79.99},
+    "buffalo": {"lat": 42.89, "lon": -78.87},
+    "sacramento": {"lat": 38.58, "lon": -121.49},
+    "st. louis": {"lat": 38.63, "lon": -90.20},
+    "st louis": {"lat": 38.63, "lon": -90.20},
+    "tampa": {"lat": 27.95, "lon": -82.46},
+    "orlando": {"lat": 28.54, "lon": -81.38},
+    "jacksonville": {"lat": 30.33, "lon": -81.66},
+    "tucson": {"lat": 32.22, "lon": -110.93},
+    "albuquerque": {"lat": 35.08, "lon": -106.65},
+    "boise": {"lat": 43.62, "lon": -116.20},
+    "anchorage": {"lat": 61.22, "lon": -149.90},
+    "honolulu": {"lat": 21.31, "lon": -157.82},
+    # International cities common on prediction markets
+    "london": {"lat": 51.51, "lon": -0.13},
+    "paris": {"lat": 48.86, "lon": 2.35},
+    "tokyo": {"lat": 35.69, "lon": 139.69},
+    "berlin": {"lat": 52.52, "lon": 13.40},
+    "toronto": {"lat": 43.65, "lon": -79.38},
+    "sydney": {"lat": -33.87, "lon": 151.21},
+    "miami beach": {"lat": 25.79, "lon": -80.13},
 }
 
 
@@ -226,14 +274,16 @@ class KalshiClient(BaseMarketClient):
         try:
             data = self._get(f"/markets/{market_id}/orderbook")
             book = data.get("orderbook", {})
-            # Kalshi: bids/asks are lists of [price_cents, size]
+            # Kalshi order book: "yes" = YES bid levels, "no" = NO bid levels.
+            # NO bids at price p cents are equivalent to YES asks at (100 - p) cents,
+            # because a NO buyer willing to pay p for NO is offering 100-p for YES.
             yes_bids = [
                 PriceLevel(price=float(b[0]) / 100.0, size=float(b[1]))
                 for b in sorted(book.get("yes", []), key=lambda x: -x[0])
             ]
             yes_asks = [
-                PriceLevel(price=float(a[0]) / 100.0, size=float(a[1]))
-                for a in sorted(book.get("yes", []), key=lambda x: x[0])
+                PriceLevel(price=(100.0 - float(a[0])) / 100.0, size=float(a[1]))
+                for a in sorted(book.get("no", []), key=lambda x: x[0])
             ]
             return OrderBook(
                 market_id=market_id,

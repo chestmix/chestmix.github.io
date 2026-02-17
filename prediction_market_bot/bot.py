@@ -229,8 +229,8 @@ class Bot:
             logger.info("Top signals:")
             for sig in result.top_signals(5):
                 logger.info(
-                    "  %s %s edge=%.2%% size=$%.2f",
-                    sig.action, sig.market.market_id, sig.edge, sig.position_size_usd,
+                    "  %s %s edge=%.1f%% size=$%.2f",
+                    sig.action, sig.market.market_id, sig.edge * 100, sig.position_size_usd,
                 )
             self._executor.execute_signals(result.tradeable_signals)
 
