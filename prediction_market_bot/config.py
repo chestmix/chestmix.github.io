@@ -105,6 +105,29 @@ class BotConfig:
         )
 
 
+# ── Monitoring & alerts ───────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class MonitoringConfig:
+    telegram_token: str              # Telegram bot token (empty = disabled)
+    telegram_chat_id: str            # Telegram chat/channel ID
+    discord_webhook_url: str         # Discord incoming webhook URL (empty = disabled)
+    daily_drawdown_alert_pct: float  # alert when daily loss > X% of bankroll
+    max_daily_loss_usd: float        # halt trading when daily loss > $X (0 = disabled)
+    snapshot_interval_seconds: int   # how often to write portfolio snapshots
+
+    @classmethod
+    def from_env(cls) -> "MonitoringConfig":
+        return cls(
+            telegram_token=_get("TELEGRAM_BOT_TOKEN", ""),
+            telegram_chat_id=_get("TELEGRAM_CHAT_ID", ""),
+            discord_webhook_url=_get("DISCORD_WEBHOOK_URL", ""),
+            daily_drawdown_alert_pct=float(_get("DAILY_DRAWDOWN_ALERT_PCT", "0.05")),
+            max_daily_loss_usd=float(_get("MAX_DAILY_LOSS_USD", "0")),
+            snapshot_interval_seconds=int(_get("SNAPSHOT_INTERVAL_SECONDS", "60")),
+        )
+
+
 # ── Aggregate config ──────────────────────────────────────────────────────────
 
 @dataclass(frozen=True)
@@ -112,6 +135,7 @@ class AppConfig:
     kalshi: KalshiConfig
     polymarket: PolymarketConfig
     bot: BotConfig
+    monitoring: MonitoringConfig
 
     @classmethod
     def load(cls) -> "AppConfig":
@@ -119,4 +143,5 @@ class AppConfig:
             kalshi=KalshiConfig.from_env(),
             polymarket=PolymarketConfig.from_env(),
             bot=BotConfig.from_env(),
+            monitoring=MonitoringConfig.from_env(),
         )
